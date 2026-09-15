@@ -1,22 +1,22 @@
 # Журнал экспериментов Практики 2
 
-- Выбранный слабый артефакт Практики 1:
-- Что в нём нужно улучшить:
-- Как поймём, что изменение полезно:
+- Выбранный слабый артефакт Практики 1: practices/practice_01/prompts.md (Master Prompt v1, требования OUT-1) и practices/practice_01/problem.md (метрики).
+- Что в нём нужно улучшить: зафиксировать обязательную структуру summary/risks/checks и ссылки file:line для каждого утверждения; описать воспроизводимые checks под каждый риск.
+- Как поймём, что изменение полезно: доля утверждений с file:line ≥ 90%, рисков ≤ 3, у каждого риска ≥1 check (см. practices/practice_01/problem.md, «Метрики»).
 
 | Техника | Файл эксперимента | Изменённый файл Практики 1 | Конкретное изменение | Проверка | Что отклонили |
 |---|---|---|---|---|---|
-| Few-shot | [`few_shot/experiment.md`](few_shot/experiment.md) |  |  |  |  |
-| R.C.T.F. | [`rctf/experiment.md`](rctf/experiment.md) |  |  |  |  |
-| Chain of Verification | [`chain_of_verification/experiment.md`](chain_of_verification/experiment.md) |  |  |  |  |
-| Tree of Thoughts | [`tree_of_thoughts/experiment.md`](tree_of_thoughts/experiment.md) |  |  |  |  |
-| RAG | [`rag/experiment.md`](rag/experiment.md) |  |  |  |  |
-| ReAct | [`react/experiment.md`](react/experiment.md) |  |  |  |  |
+| Few-shot | [`few_shot/experiment.md`](few_shot/experiment.md) | practices/practice_01/prompts.md (Master Prompt v1), practices/practice_01/problem.md | Уточнили OUT-1: требование структуры summary/risks/checks и обязательных ссылок file:line; добавили сценарии проверок и ссылку на API-1 (лимит diff). | Проверки: сопоставление утверждений с TRAINING_PR.diff; POST /api/reviews без diff → 4xx (ожидание), фактически 500; diff > 20000 символов → отклонение (API-1). Ссылки: practices/practice_01/prompts.md раздел «Проверки и evidence». | Отклонили замечания без file:line и предположения без evidence (ссылка: practices/practice_01/prompts/P1_01.md и запись P1-01 в practices/practice_01/prompts.md). |
+| R.C.T.F. | [`rctf/experiment.md`](rctf/experiment.md) | practices/practice_01/prompts.md | Уточнили правило: каждое утверждение (findings и risks) обязано иметь ссылку file:line. | Проверка: сверка текущего ответа с TRAINING_PR.diff — каждое утверждение имеет file:line; см. practices/practice_01/prompts.md, раздел «Проверки и evidence». | Отклонили общие замечания без file:line и без evidence; ссылки: practices/practice_01/prompts/P1_01.md и запись P1-01. |
+| Chain of Verification | [`chain_of_verification/experiment.md`](chain_of_verification/experiment.md) | practices/practice_01/prompts.md | Закрепили требование: все findings и risks сопровождаются file:line; добавлен формат «Questions, Evidence, Checks» для явной верификации. | Проверка: в журнале эксперимента CoV перечислены вопросы и evidence; сверка с TRAINING_PR.diff показывает file:line у всех утверждений. | Отклонили выводы без вопросов/доказательств и без file:line (ссылка: practices/practice_01/prompts/P1_01.md, запись P1-01). |
+| Tree of Thoughts | [`tree_of_thoughts/experiment.md`](tree_of_thoughts/experiment.md) | practices/practice_01/prompts.md | OUT-1 уточнён: структура summary/risks/checks, каждый finding/risk с file:line; добавлен API-1: diff ≤ 20 000 и поведение 4xx; требование явных Checks. Привязка к TRAINING_PR.diff: review_service.py:20–22 (структура ответа), api.py:36–37 (валидация входа отсутствует). | Checks: C1 — малый diff → доля утверждений с file:line ≥ 90%; C2 — POST /api/reviews с {} → 422 (до правки 500 из-за KeyError, api.py:37); C3 — длинный diff → 422/413 без вызова LLM. Все проверки сверены с TRAINING_PR.diff. | Отклонено: альтернативы без file:line, >3 рисков, отсутствие схемы валидации /api/reviews (api.py:36–37). Ссылки: practices/practice_01/prompts/P1_01.md, запись P1-01. |
+| RAG | [`rag/experiment.md`](rag/experiment.md) | practices/practice_01/prompts.md, practices/practice_01/problem.md | Добавили в Master Prompt: обязательные ссылки [Sx:file:line] для каждого утверждения; правило API-1: diff ≤ 20 000 символов, при нарушении 422/413 и запрет вызова LLM; требование воспроизводимых checks ≥1 на риск. | Проверка: в rag/experiment.md раздел Output содержит Findings [S1 file:line], 3 Risks с C1–C3; доля утверждений с file:line = 100% (≥90%); рисков >3 = 0; checks ≥1 на риск = выполнено. Сверено с S2 (стр. 17–19) и S1 (стр. 10–12, 19–22, 35–37). | Отклонены: замечания без источника/file:line; требования без расчёта метрик; любые правки, не подтверждённые S1–S3. |
+| ReAct | [`react/experiment.md`](react/experiment.md) | practices/practice_01/prompts.md (OUT-1, «Проверки и evidence»), practices/practice_01/problem.md («Метрики») | Уточнили OUT-1: требовать структуру summary/risks/checks и ссылки file:line для каждого утверждения; добавили API-1: лимит diff ≤ 20 000 и 4xx при нарушении; в «Проверки и evidence» добавили сценарии: короткий diff (file:line ≥90%), POST без diff → 4xx, длинный diff → 422/413 без вызова LLM; в problem.md уточнили метод расчёта доли и требование ≥1 check на риск. | Проверка: сверка с TRAINING_PR.diff — evidence: app/review_service.py:19-22, 20-21; app/api.py:35-37. Метрики по S2:15–20 достигнуты — доля file:line 3/3=100%, рисков>3=0, checks 3/3. | Отклонили: утверждения без file:line; >3 рисков; выводы без расчёта метрик. Ссылки: S1 app/review_service.py:20-22, S1 app/api.py:36-37; S2:15–20. |
 
 ## Независимое ревью
 
 | Замечание другой команды | Где исправили | Evidence |
 |---|---|---|
-| Двусмысленность |  |  |
-| Непроверяемое требование |  |  |
-| Пропущенный риск или источник |  |  |
+| Двусмысленность | practices/practice_01/prompts.md — уточнили API-1 про статусы 422/413 и запрет вызова LLM | S1 TRAINING_PR.diff не содержит лимита; S2 problem.md:17–19 — требование checks, фиксируем поведение API-1 |
+| Непроверяемое требование | practices/practice_01/problem.md — уточнили метод расчёта доли file:line и требование ≥1 check на риск | S2:17–19 |
+| Пропущенный риск или источник | practices/practice_02/rag/experiment.md — добавили риск prompt injection и check C3 с ссылкой [S1:20–21] | S1:20–21 |
