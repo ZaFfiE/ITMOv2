@@ -47,7 +47,8 @@ def list_tools():
                     "properties": {
                         "pattern": {"type": "string"},
                         "include": {"type": "string"},
-                        "limit": {"type": "number"}
+                        "limit": {"type": "number"},
+                        "max_files": {"type": "number"}
                     },
                     "required": ["pattern", "include"]
                 }
@@ -60,6 +61,7 @@ def repo_search(arguments):
     pattern = arguments.get("pattern", "")
     include = arguments.get("include", "")
     limit = arguments.get("limit")
+    max_files = arguments.get("max_files")
     if not include or not isinstance(include, str):
         raise ValueError("include mask is required")
     if not pattern or not isinstance(pattern, str):
@@ -70,8 +72,19 @@ def repo_search(arguments):
         raise ValueError(f"invalid regex: {e}")
 
     files = glob.glob(include, recursive=True)
+    # validate and apply max_files if provided
+    if max_files is not None:
+        try:
+            mf = int(max_files)
+        except Exception:
+            raise ValueError("max_files must be an integer")
+        if mf <= 0:
+            raise ValueError("max_files must be > 0")
+        files = files[:mf]
+    
     results = []
     total_matches = 0
+    files_processed = 0
     for path in files:
         if not os.path.isfile(path):
             continue
@@ -80,6 +93,7 @@ def repo_search(arguments):
                 lines = f.readlines()
         except Exception:
             continue
+        files_processed += 1
         matches = []
         for i, line in enumerate(lines, start=1):
             if rx.search(line):
@@ -93,8 +107,9 @@ def repo_search(arguments):
             break
 
     return {
-        "arguments": {"pattern": pattern, "include": include, "limit": limit},
+        "arguments": {"pattern": pattern, "include": include, "limit": limit, "max_files": max_files},
         "total_matches": total_matches,
+        "files_processed": files_processed,
         "files": results,
         "generated_at": datetime.utcnow().isoformat() + "Z"
     }

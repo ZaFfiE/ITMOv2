@@ -31,13 +31,13 @@ def main():
     success_cases = [
         {"jsonrpc":"2.0","id":1,"method":"initialize"},
         {"jsonrpc":"2.0","id":2,"method":"tools/list"},
-        {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"repo_search","arguments":{"pattern":"AGENTS","include":"**/*.md","limit":5}}}
+        {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"repo_search","arguments":{"pattern":"AGENTS","include":"**/*.md","limit":5,"max_files":10}}}
     ]
 
     error_cases = [
         {"jsonrpc":"2.0","id":1,"method":"initialize"},
         {"jsonrpc":"2.0","id":2,"method":"tools/list"},
-        {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"repo_search","arguments":{"pattern":"[","include":"**/*.md"}}}
+        {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"repo_search","arguments":{"pattern":"[","include":"**/*.md","max_files":0}}}
     ]
 
     run_case(success_cases, success_log)
