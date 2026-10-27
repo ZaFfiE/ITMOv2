@@ -93,9 +93,18 @@ class ReadingList:
             return 200, asdict(item)
 
     def list(self, query: dict) -> Tuple[int, List[dict]]:
-        # Filters: status=<str>, tags=tag1,tag2
+        # Filters: status=<str>, tags=tag1,tag2, q=<title substring> (case-insensitive)
+        # Sorting: sort=addedAt|-addedAt
         status = query.get("status")
         tags_raw = query.get("tags")
+        sort = query.get("sort")
+        q_raw = query.get("q")
+        q: Optional[str] = None
+        if q_raw is not None:
+            # Trim whitespace; treat empty-after-trim as absent
+            t = q_raw.strip()
+            if t:
+                q = t
         tags_filter: Optional[List[str]] = None
         if tags_raw:
             # Accept comma-separated list
@@ -109,6 +118,21 @@ class ReadingList:
                 # Match if item contains ANY of requested tags. Keep simple.
                 s = set(tags_filter)
                 items = [it for it in items if s.intersection(it.tags)]
+            if q is not None:
+                # Case-insensitive substring match on title
+                q_lower = q.lower()
+                items = [it for it in items if q_lower in it.title.lower()]
+
+            # Apply optional sorting by addedAt
+            if sort is not None:
+                if sort == "addedAt":
+                    items.sort(key=lambda it: (it.addedAt, it.id))
+                elif sort == "-addedAt":
+                    # Reverse both primary and tie-breaker
+                    items.sort(key=lambda it: (it.addedAt, it.id), reverse=True)
+                else:
+                    return 400, {"error": "invalid sort"}
+
             return 200, [asdict(it) for it in items]
 
     def patch(self, item_id: int, payload: dict) -> Tuple[int, dict]:
@@ -163,6 +187,108 @@ class Router:
         url = urlsplit(target)
         query = {k: v[0] for k, v in parse_qs(url.query, keep_blank_values=True).items()}
 
+        # Minimal HTML UI page
+        if method == "GET" and url.path in ("/", "/index.html"):
+            html = (
+                """
+<!doctype html>
+<html>
+  <head>
+    <meta charset=\"utf-8\">
+    <title>Reading List</title>
+    <style>
+      body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; }
+      .controls { display: flex; gap: .5rem; flex-wrap: wrap; }
+      input { padding: .4rem; }
+      button { padding: .4rem .7rem; }
+      ul { padding-left: 1.2rem; }
+      .tags { color: #555; }
+      .error { color: #b00020; }
+      .empty { color: #555; }
+    </style>
+  </head>
+  <body>
+    <h1>Reading List</h1>
+    <div class=\"controls\">
+      <label>Search by title <input id=\"q\" placeholder=\"Search...\"></label>
+      <label>Status (exact) <input id=\"status\" placeholder=\"planned\"></label>
+      <label>Tags (comma-separated) <input id=\"tags\" placeholder=\"ml,nlp\"></label>
+      <button id=\"search\">Search</button>
+      <button id=\"clear\">Clear</button>
+    </div>
+    <p id=\"loading\" style=\"display:none\">Loading…</p>
+    <p id=\"error\" class=\"error\" style=\"display:none\"></p>
+    <p id=\"empty\" class=\"empty\" style=\"display:none\">No items match your search.</p>
+    <ul id=\"results\"></ul>
+    <script>
+    const $ = (id) => document.getElementById(id);
+    const inputQ = $("q");
+    const inputStatus = $("status");
+    const inputTags = $("tags");
+    const btnSearch = $("search");
+    const btnClear = $("clear");
+    const elLoading = $("loading");
+    const elError = $("error");
+    const elEmpty = $("empty");
+    const elResults = $("results");
+
+    function buildQuery() {
+      const qs = new URLSearchParams();
+      const q = (inputQ.value || "").trim();
+      if (q) qs.set("q", q);
+      if (inputStatus.value) qs.set("status", inputStatus.value);
+      if (inputTags.value) qs.set("tags", inputTags.value);
+      return qs.toString();
+    }
+
+    async function fetchItems() {
+      elLoading.style.display = "";
+      elError.style.display = "none";
+      elEmpty.style.display = "none";
+      elResults.innerHTML = "";
+      btnSearch.disabled = true;
+      try {
+        const qs = buildQuery();
+        const url = "/items" + (qs ? ("?" + qs) : "");
+        const resp = await fetch(url);
+        const text = await resp.text();
+        if (!resp.ok) {
+          try { const j = JSON.parse(text); elError.textContent = j.error || "Request failed"; }
+          catch(_) { elError.textContent = text || "Request failed"; }
+          elError.style.display = "";
+          return;
+        }
+        const items = text ? JSON.parse(text) : [];
+        if (!Array.isArray(items) || items.length === 0) {
+          elEmpty.style.display = "";
+          return;
+        }
+        for (const it of items) {
+          const li = document.createElement("li");
+          const tags = (it.tags && it.tags.length) ? it.tags.join(", ") : "";
+          li.innerHTML = `<strong>${it.title}</strong> — <a href="${it.url}">${it.url}</a> — ${it.status}` + (tags ? ` — <span class="tags">${tags}</span>` : "");
+          elResults.appendChild(li);
+        }
+      } catch (e) {
+        elError.textContent = (e && e.message) ? e.message : "Network error";
+        elError.style.display = "";
+      } finally {
+        elLoading.style.display = "none";
+        btnSearch.disabled = false;
+      }
+    }
+
+    btnSearch.addEventListener("click", fetchItems);
+    inputQ.addEventListener("keydown", (e) => { if (e.key === "Enter") fetchItems(); });
+    btnClear.addEventListener("click", () => { inputQ.value = ""; fetchItems(); });
+    // Initial load with no q, status, or tags
+    fetchItems();
+    </script>
+  </body>
+ </html>
+                """
+            )
+            return 200, html, True
         if method == "GET" and url.path == "/health":
             return 200, {"status": "ok"}, False
 

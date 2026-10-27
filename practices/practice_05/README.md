@@ -6,6 +6,7 @@ Endpoints
 - GET /health → {"status":"ok"}
 - POST /items → create item. Body: {"title": str, "url": str, "tags": [str] or "tag1,tag2" or "tag", "status": str="planned"}
 - GET /items?status=...&tags=tag1,tag2 → list items with optional filters
+  Optional: `sort=addedAt` (oldest→newest) or `sort=-addedAt` (newest→oldest)
 - GET /items/{id} → get item by id
 - PATCH /items/{id} → partial update {"status"?: str, "tags"?: [str] or "tag1,tag2"}
 - DELETE /items/{id} → delete item
@@ -38,6 +39,18 @@ List (status filter):
 
 List (tags filter):
   http :8075/items tags==ml,nlp
+
+ List (sort ascending by addedAt):
+   http :8075/items sort==addedAt
+
+ List (sort descending by addedAt):
+   http :8075/items sort==-addedAt
+
+ Combined (status + sort):
+   http :8075/items status==planned sort==-addedAt
+
+ Combined (tags + sort):
+   http :8075/items tags==ml,nlp sort==addedAt
 
 Get by id:
   http :8075/items/1
