@@ -1,0 +1,13 @@
+{
+  "status": 500,
+  "headers": {
+    "Content-Length": "135",
+    "Connection": "keep-alive",
+    "Content-Type": "application/json; charset=utf-8",
+    "Date": "Tue, 27 Oct 2026 18:22:38 GMT",
+    "Keep-Alive": "timeout=60",
+    "Proxy-Connection": "keep-alive",
+    "Server": "BaseHTTP/0.6 Python/3.12.3"
+  },
+  "body": "{\"error\": \"[Errno 2] No such file or directory: '/tmp/itmo-practice-06-olkghy78/files/alice/receipt.txt'\", \"type\": \"FileNotFoundError\"}"
+}
