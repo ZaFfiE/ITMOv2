@@ -1,0 +1,185 @@
+openapi: 3.1.0
+info:
+  title: Reading List API
+  version: 0.1.0
+servers:
+  - url: http://127.0.0.1:8075
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                required: [status]
+  /items:
+    get:
+      summary: List items
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: tags
+          description: Comma-separated list of tags to filter by
+          schema:
+            type: string
+          style: simple
+          explode: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+    post:
+      summary: Create item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /items/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      summary: Get item by id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Update item (partial)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemPatch'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete item
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                required: [deleted]
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        url: { type: string, format: uri }
+        tags:
+          type: array
+          items: { type: string }
+        status: { type: string }
+        addedAt: { type: string, format: date-time }
+        readAt:
+          anyOf:
+            - { type: 'null' }
+            - { type: string, format: date-time }
+      required: [id, title, url, tags, status, addedAt]
+    ItemCreate:
+      type: object
+      properties:
+        title: { type: string }
+        url: { type: string, format: uri }
+        tags:
+          description: Accepts array of strings; implementation also accepts CSV string
+          oneOf:
+            - type: array
+              items: { type: string }
+            - type: string
+        status:
+          type: string
+          default: planned
+      required: [title, url]
+    ItemPatch:
+      type: object
+      properties:
+        status: { type: string }
+        tags:
+          oneOf:
+            - type: array
+              items: { type: string }
+            - type: string
+      additionalProperties: false
+      minProperties: 1
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]

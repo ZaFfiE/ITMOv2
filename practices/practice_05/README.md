@@ -18,6 +18,9 @@ Run
 1. Python 3.11+ recommended.
 2. Start service:
    python practices/practice_05/app/service.py --port 8075
+3. (Optional) Validate OpenAPI spec with openspec:
+   - npm i -g @fission-ai/openspec@1.14.1
+   - openspec validate practices/practice_05/specs/openapi.yaml
 
 Examples (httpie)
 Health:
@@ -48,3 +51,7 @@ Patch (tags):
 
 Delete:
   http DELETE :8075/items/1
+
+Specification
+- OpenAPI file: practices/practice_05/specs/openapi.yaml
+- Validate: openspec validate practices/practice_05/specs/openapi.yaml
