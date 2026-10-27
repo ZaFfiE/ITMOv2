@@ -4,10 +4,10 @@ Minimal dependency-free HTTP service using Python stdlib (http.server) with in-m
 
 Endpoints
 - GET /health → {"status":"ok"}
-- POST /items → create item. Body: {"title": str, "url": str, "tags": [str]=[], "status": str="planned"}
+- POST /items → create item. Body: {"title": str, "url": str, "tags": [str] or "tag1,tag2" or "tag", "status": str="planned"}
 - GET /items?status=...&tags=tag1,tag2 → list items with optional filters
 - GET /items/{id} → get item by id
-- PATCH /items/{id} → partial update {"status"?: str, "tags"?: [str]}
+- PATCH /items/{id} → partial update {"status"?: str, "tags"?: [str] or "tag1,tag2"}
 - DELETE /items/{id} → delete item
 
 Notes
@@ -25,6 +25,7 @@ Health:
 
 Create:
   http POST :8075/items title="Article" url="https://example.com" tags:='["ml","nlp"]'
+  http POST :8075/items title="Article" url="https://example.com" tags=ml,nlp
 
 List (all):
   http :8075/items
@@ -43,6 +44,7 @@ Patch (status -> done):
 
 Patch (tags):
   http PATCH :8075/items/1 tags:='["ai"]'
+  http PATCH :8075/items/1 tags=ai,ml
 
 Delete:
   http DELETE :8075/items/1

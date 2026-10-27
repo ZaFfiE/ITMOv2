@@ -57,7 +57,12 @@ class ReadingList:
         tags = payload.get("tags", [])
         if tags is None:
             tags = []
-        if not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
+        elif isinstance(tags, str):
+            # Accept single string or comma-separated string; normalize to list
+            tags = [t for t in (x.strip() for x in tags.split(",")) if t]
+        elif not isinstance(tags, list):
+            return 400, {"error": "tags must be an array of strings or a string"}
+        if not all(isinstance(t, str) for t in tags):
             return 400, {"error": "tags must be an array of strings"}
 
         status = payload.get("status", "planned")
@@ -131,7 +136,11 @@ class ReadingList:
                 tags = payload["tags"]
                 if tags is None:
                     tags = []
-                if not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
+                elif isinstance(tags, str):
+                    tags = [t for t in (x.strip() for x in tags.split(",")) if t]
+                elif not isinstance(tags, list):
+                    return 400, {"error": "tags must be an array of strings or a string"}
+                if not all(isinstance(t, str) for t in tags):
                     return 400, {"error": "tags must be an array of strings"}
                 item.tags = [t for t in tags]
             return 200, asdict(item)
