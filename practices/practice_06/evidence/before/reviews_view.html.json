@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Length": "58",
+    "Connection": "keep-alive",
+    "Content-Type": "text/html; charset=utf-8",
+    "Date": "Tue, 27 Oct 2026 18:15:05 GMT",
+    "Keep-Alive": "timeout=60",
+    "Proxy-Connection": "keep-alive",
+    "Server": "BaseHTTP/0.6 Python/3.12.3"
+  },
+  "body": "<html><body><p><script>alert(1)</script></p></body></html>",
+  "is_json": false
+}
