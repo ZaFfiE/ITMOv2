@@ -1,0 +1,70 @@
+Reading List API (practice_05)
+
+Minimal dependency-free HTTP service using Python stdlib (http.server) with in-memory storage.
+
+Endpoints
+- GET /health → {"status":"ok"}
+- POST /items → create item. Body: {"title": str, "url": str, "tags": [str] or "tag1,tag2" or "tag", "status": str="planned"}
+- GET /items?status=...&tags=tag1,tag2 → list items with optional filters
+  Optional: `sort=addedAt` (oldest→newest) or `sort=-addedAt` (newest→oldest)
+- GET /items/{id} → get item by id
+- PATCH /items/{id} → partial update {"status"?: str, "tags"?: [str] or "tag1,tag2"}
+- DELETE /items/{id} → delete item
+
+Notes
+- Fields: title, url, tags, status, addedAt, readAt; readAt auto-set when status becomes "done".
+- Storage is in-memory; data resets on restart.
+
+Run
+1. Python 3.11+ recommended.
+2. Start service:
+   python practices/practice_05/app/service.py --port 8075
+3. (Optional) Validate OpenAPI spec with openspec:
+   - npm i -g @fission-ai/openspec@1.14.1
+   - openspec validate practices/practice_05/specs/openapi.yaml
+
+Examples (httpie)
+Health:
+  http :8075/health
+
+Create:
+  http POST :8075/items title="Article" url="https://example.com" tags:='["ml","nlp"]'
+  http POST :8075/items title="Article" url="https://example.com" tags=ml,nlp
+
+List (all):
+  http :8075/items
+
+List (status filter):
+  http :8075/items status==planned
+
+List (tags filter):
+  http :8075/items tags==ml,nlp
+
+ List (sort ascending by addedAt):
+   http :8075/items sort==addedAt
+
+ List (sort descending by addedAt):
+   http :8075/items sort==-addedAt
+
+ Combined (status + sort):
+   http :8075/items status==planned sort==-addedAt
+
+ Combined (tags + sort):
+   http :8075/items tags==ml,nlp sort==addedAt
+
+Get by id:
+  http :8075/items/1
+
+Patch (status -> done):
+  http PATCH :8075/items/1 status=done
+
+Patch (tags):
+  http PATCH :8075/items/1 tags:='["ai"]'
+  http PATCH :8075/items/1 tags=ai,ml
+
+Delete:
+  http DELETE :8075/items/1
+
+Specification
+- OpenAPI file: practices/practice_05/specs/openapi.yaml
+- Validate: openspec validate practices/practice_05/specs/openapi.yaml
